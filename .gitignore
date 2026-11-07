@@ -1,0 +1,23 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+*.ipch
+
+# 构建产物
+x64/
+Debug/
+Release/
+build/
+bin/
+*.exe
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+
+# 运行时文件
+save.txt
