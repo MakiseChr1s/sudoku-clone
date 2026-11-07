@@ -12,7 +12,7 @@
 需要 Windows + MinGW g++：
 
 ```powershell
-g++ -std=c++17 -Wall -Wextra main.cpp -o sudoku.exe
+g++ -std=c++17 -Wall -Wextra src/main.cpp -o sudoku.exe
 .\sudoku.exe
 
 ```
@@ -50,4 +50,4 @@ g++ -std=c++17 -Wall -Wextra main.cpp -o sudoku.exe
 只支持 Windows 控制台
 
 ## 截图
-`docs/screenshot.png`
+![screenshot](docs/screenshot.png)
