@@ -8,39 +8,35 @@
 #include <unordered_set>
 #include <fstream>
 
+#include "Block.h"
+
 #define main1
 
 int lambda = []() { SetConsoleOutputCP(65001);return 0; }();
 
 #ifdef main1
 
-std::vector<std::vector<int>> board = {
-    {5, 3, 0, 0, 7, 0, 0, 0, 0},
-    {6, 0, 0, 1, 9, 5, 0, 0, 0},
-    {0, 9, 8, 0, 0, 0, 0, 6, 0},
-    {8, 0, 0, 0, 6, 0, 0, 0, 3},
-    {4, 0, 0, 8, 0, 3, 0, 0, 1},
-    {7, 0, 0, 0, 2, 0, 0, 0, 6},
-    {0, 6, 0, 0, 0, 0, 2, 8, 0},
-    {0, 0, 0, 4, 1, 9, 0, 0, 5},
-    {0, 0, 0, 0, 8, 0, 0, 7, 9}
+struct Empty
+{
+    int r, c;
+    std::vector<int> candidates;
 };
 
 std::vector<std::vector<int>> testboard = {
-    { 5, 3, 4, 6, 7, 8 ,9, 1, 2},
-    {6, 7, 2, 1 ,9 ,5 ,3 ,4 ,8 },
-    { 1, 9, 8 ,3 ,4 ,2, 5, 6,7 },
-    {8, 5, 9 ,7 ,6 ,1 ,4 ,2 ,3},
-    {4, 2, 6 ,8 ,5 ,3 ,7 ,9, 1},
+    {5, 3, 4, 6, 7, 8, 9, 1, 2},
+    {6, 7, 2, 1, 9, 5, 3, 4, 8},
+    {1, 9, 8, 3, 4, 2, 5, 6, 7},
+    {8, 5, 9, 7, 6, 1, 4, 2, 3},
+    {4, 2, 6, 8, 5, 3, 7, 9, 1},
     {7, 1, 3, 9, 2, 4, 8, 5, 6},
     {9, 6, 1, 5, 3, 7, 2, 8, 4},
-    {2, 8, 7, 4, 1 ,9, 6, 3, 5},
+    {2, 8, 7, 4, 1, 9, 6, 3, 5},
     {3, 4, 5, 2, 8, 6, 1, 7, 9}
 };
 
 std::vector<std::vector<int>> given(9, std::vector<int>(9, 0));
 
-void init_given(bool isloaded) {
+void init_given(bool isloaded, const std::vector<std::vector<int>>& board) {
     if (!isloaded)
     {
         for (int row = 0;row < 9;row++)
@@ -49,7 +45,7 @@ void init_given(bool isloaded) {
     }
 }
 
-void printBoard() {
+void printBoard(const std::vector<std::vector<int>>& board) {
     for (int r = 0; r < 9; ++r) {
         for (int c = 0; c < 9; ++c) {
             if (board[r][c] == 0)
@@ -61,7 +57,7 @@ void printBoard() {
     }
 }
 
-bool canplace(const int& row,const int& col,const int& value) 
+bool canplace(const int& row,const int& col,const int& value,const std::vector<std::vector<int>>& board) 
 {
     int r = row - 1, c = col - 1;
     for (int i = 0;i < 9;i++)
@@ -93,7 +89,7 @@ void printText(int& returnCode)
     returnCode = -1;
 }
 
-bool isWin(const std::vector<std::vector<int>>& b)
+bool isComplete(const std::vector<std::vector<int>>& b)
 {
     //非零检测
     for(const auto& row:b)
@@ -139,7 +135,7 @@ bool isWin(const std::vector<std::vector<int>>& b)
         return true;
 }
 
-bool save(const std::string& path)
+bool save(const std::string& path,const std::vector<std::vector<int>>& board)
 {
     //打开文件，若文件不存在则创建新文件
     std::ofstream outfile(path);
@@ -168,7 +164,7 @@ bool save(const std::string& path)
     return true;
 }
 
-bool load(const std::string& path)
+bool load(const std::string& path, std::vector<std::vector<int>>& board)
 {
     
     std::ifstream infile(path);
@@ -202,18 +198,167 @@ bool load(const std::string& path)
     return true;
 }
 
+int solve(std::vector<std::vector<int>>& b,const std::vector<Empty>& emp ,int idx ,int lmt)
+{
+    
+    if (emp.size() == idx) return 1;
+
+    const Empty& e = emp[idx];
+    int total = 0;
+
+   
+    for (int v : e.candidates)
+    {
+        if (!canplace(e.r + 1, e.c + 1, v, b)) continue;
+
+        b[e.r][e.c] = v;
+        total += solve(b, emp, idx + 1, lmt - total);
+        b[e.r][e.c] = 0;
+
+        if (total >= lmt) break;
+    }
+        return total;
+}
+
+bool MRV(std::vector<std::vector<int>> board)
+{
+
+    Block b;
+    auto empty = b.emptyGridFinder(board);
+    if (empty.size() > 1)
+    {
+        //获取每个空格的候选集
+        int candidateSetCount = 0;
+        std::vector<bool> isfilled(empty.size(), false);
+        std::vector<Empty> emp;
+
+        while (candidateSetCount < empty.size())
+        {
+            std::vector<int> cache;
+            int r = empty[candidateSetCount].first,
+                c = empty[candidateSetCount].second;
+            std::vector<int> unit = { 1,2,3,4,5,6,7,8,9 };
+            for (int v : unit)
+            {
+                if (canplace(r + 1, c + 1, v, board))
+                {
+                    cache.reserve(1);
+                    cache.emplace_back(v);
+                }
+            }
+                emp.push_back({ r,c,cache });
+                candidateSetCount++;
+            
+        }
+
+        //按候选集长度从小到大排序
+        sort(emp.begin(), emp.end(), [](const Empty& e1, const Empty& e2) {return e1.candidates.size() < e2.candidates.size();});
+
+        //2 9 5 6 3 1 8 4 7
+        //6 8 7 2 9 4 3 1 5
+        //3 1 4 8 5 . 6 9 2
+        //5 2 . 1 . 6 9 7 4
+        //4 7 1 9 2 3 5 8 6
+        //9 6 8 4 . 5 2 3 1
+        //1 3 2 7 6 8 4 5 9
+        //8 4 9 5 . 2 7 6 3
+        //7 5 6 3 4 9 1 2 8
+        //递归求解
+        int solves = solve(board, emp, 0, 2);
+        if (solves == 1) return true;
+        else if(solves == 0 || solves == 2) return false;
+    }
+
+    return true;
+}
+
+void randomErase(std::vector<std::vector<int>>& b,const int& level)
+{
+    std::vector<std::pair<int, int>> position;
+    for (int r = 0;r < 9;r++)
+    {
+        for (int c = 0;c < 9;c++)
+        {
+            position.push_back(std::make_pair(r, c));
+        }
+    }
+    static std::random_device rd;
+    std::mt19937 gen(rd());
+    std::shuffle(position.begin(), position.end(), gen);
+
+    int empty = 0;
+    while (empty < level * 20)
+    {
+        int r = position[empty].first,
+            c = position[empty].second;
+
+        int value = b[r][c];
+        b[r][c] = 0;
+        if (!MRV(b)) b[r][c] = value;
+        
+        empty++;
+
+    }
+}
+
 void play()
 {
+    Block block;
     int returnCode = -1;
-    //if load == true,init_given(!load())
-    init_given(load("save.txt"));
-    Sleep(1000);
+    int level;
+    char istoload;
+    bool loaded;
+    while(true)
+    {
+        system("cls");
+        std::cout << "是否读档（Y/N）" << std::endl;
+        
+
+        if(!(std::cin >> istoload))        
+        {
+            std::cin.clear();
+            std::cin.ignore(10000, '\n');
+        }
+        else if (istoload == 'y' || istoload == 'Y')
+        {
+            loaded = load("save.txt",block.matrix);
+            break;
+        }
+        else if (istoload == 'n' || istoload == 'N')
+        {
+            loaded = false;
+            break;
+        }
+    }
+    Sleep(500);
+    
+    if (!loaded)
+    {
+        block.generator();
+        while (true)
+        {
+            system("cls");
+            std::cout << "请输入难度（1~3）" << std::endl;
+            if (!(std::cin >> level))
+            {
+                std::cin.clear();
+                std::cin.ignore(10000, '\n');
+            }
+            else if (level > 0 && level < 4)
+            {
+                randomErase(block.matrix, level);
+                break;
+            }
+        }
+    
+    }
+    init_given(loaded,block.matrix);
     while (true)
     {
         int row = 0, col = 0, value;
 
         system("cls");
-        printBoard();
+        printBoard(block.matrix);
         std::cout << "请输入行，列，值，输入0 0 0退出。";
         printText(returnCode);
 
@@ -228,12 +373,12 @@ void play()
         if (row == 0 && col == 0 && value == 0)
         {
             std::cout << "游戏退出" << std::endl;
-            save("save.txt");
+            save("save.txt",block.matrix);
             break;
         }
 
-        if (row < 1 || row > 9 || col < 1 || col > 9 ||
-            value < 0 || value > 9) {
+        if ((row < 1 || row > 9 || col < 1 || col > 9 ||
+            value < 0 || value > 9)) {
             returnCode = 1;
             continue;
         }
@@ -250,13 +395,13 @@ void play()
         if (value != 0)
         {
 
-            if ((canplace(row, col, value)))
+            if ((canplace(row, col, value,block.matrix)))
             {
-                board[r][c] = value;
-                if (isWin(board))
+                block.matrix[r][c] = value;
+                if (isComplete(block.matrix))
                 {
                     system("cls");
-                    printBoard();
+                    printBoard(block.matrix);
                     std::cout << "完成！" << std::endl;
                     break;
                 }
@@ -272,7 +417,7 @@ void play()
 
         if (value == 0)
         {
-            board[r][c] = value;
+            block.matrix[r][c] = value;
                 returnCode = 4;
                 continue;
         }
@@ -282,9 +427,7 @@ void play()
 
 int main()
 {
-
     play();
-
 }
 
 #endif
