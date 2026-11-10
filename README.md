@@ -1,5 +1,9 @@
 # sudoku-clone
 
+这是完整版（随机题面 + 唯一解 + 难度）。
+初学者版（固定题面）在 main：
+https://github.com/MakiseChr1s/sudoku-clone/tree/main
+
 一个 7 天内写出来的 Windows 控制台数独仿版，用来练习 C++、递归和回溯。
 
 原项目：https://github.com/mayerui/sudoku/
