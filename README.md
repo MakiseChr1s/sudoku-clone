@@ -1,5 +1,9 @@
 # sudoku-clone
 
+这是固定题面的初学者版。
+完整版（随机题面 + 唯一解 + 难度）在 advanced 分支：
+https://github.com/MakiseChr1s/sudoku-clone/tree/advanced
+
 一个 7 天内写出来的初学者练习用 Windows 控制台数独仿版。
 原项目:https://github.com/mayerui/sudoku/
 
